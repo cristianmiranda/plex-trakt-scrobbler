@@ -25,19 +25,38 @@ def parse_line(config, log_line):
 
     logger = logging.getLogger(__name__)
 
-    REGEX = [
+    SCROBBLE_REGEX = [
         re.compile('.*Updated play state for /library/metadata/([0-9]+).*'),
     ]
 
-    for regex in REGEX:
+    WATCHED_REGEX = [
+        re.compile('.*Library item ([0-9]+).* got played by account 1!')
+    ]
+
+    UNWATCHED_REGEX = [
+        re.compile('.*Library item ([0-9]+).* got unplayed by account 1!')
+    ]
+
+    for regex in SCROBBLE_REGEX:
         m = regex.match(log_line)
 
         if m:
-            logger.info('Found played TV show and extracted library id \'{l_id}\' from plex log '.format(l_id=m.group(1)))
-            process_item(config, m.group(1))
+            scrobble(config, m.group(1))
+
+    for regex in WATCHED_REGEX:
+        m = regex.match(log_line)
+
+        if m:
+            watch(config, m.group(1))
+
+    for regex in UNWATCHED_REGEX:
+        m = regex.match(log_line)
+
+        #if m:
+        # TODO: Remove Watch History
 
 
-def process_item(config, item):
+def scrobble(config, item):
     ''' Processes played / unplayed item scrobbling TVShowTime
 
         :param item: played / unplayed item id
@@ -47,7 +66,7 @@ def process_item(config, item):
 
     logger = logging.getLogger(__name__)
 
-    metadata = fetch_metadata(item, config)
+    metadata = fetch_metadata_from_sessions(item, config)
     if not metadata: return
     
     episode_label = "{0} S{1}E{2} - ({3}) - Progress: {4} - Duration: {5}".format(metadata['show_name'],
@@ -57,7 +76,7 @@ def process_item(config, item):
                                                       metadata['progress'],
                                                       metadata['duration'])
 
-    logger.info("Matched TV show {0}".format(episode_label))
+    logger.info("Scrobble - {0}".format(episode_label))
 
     # submit to tvshowtime.com
     trakt = Trakt(config)
@@ -67,11 +86,33 @@ def process_item(config, item):
         metadata['progress'], 
         metadata['srobbling'])
 
-    # scrobble was not successful , FIXME: do something?
-    # if not a:
+
+def watch(config, item):
+    ''' Processes played / unplayed item scrobbling TVShowTime
+
+        :param item: played / unplayed item id
+        :type item: integer 
+        :param played: flag to know if item has been played or unplayed
+        :type played: boolean '''
+
+    logger = logging.getLogger(__name__)
+
+    metadata = fetch_metadata_from_library(item, config)
+    if not metadata: return
+    
+    episode_label = "{0} S{1}E{2}".format(metadata['show_name'], metadata['season_number'], metadata['episode_number'])
+    logger.info("Watch -  {0}".format(episode_label))
+
+    # submit to tvshowtime.com
+    trakt = Trakt(config)
+    a = trakt.scrobble_show(metadata['show_name'], 
+        metadata['season_number'], 
+        metadata['episode_number'], 
+        100, 
+        'stop')
 
 
-def fetch_metadata(l_id, config):
+def fetch_metadata_from_sessions(l_id, config):
     global show_id
     global show_name
     global season_number
@@ -178,6 +219,56 @@ def fetch_metadata(l_id, config):
         return result
 
     return False
+
+
+def fetch_metadata_from_library(l_id, config):
+    ''' retrieves the metadata information from the Plex media Server api. '''
+
+    logger = logging.getLogger(__name__)
+    url = '{url}/library/metadata/{l_id}?X-Plex-Token={plex_token}'.format(url=config.get('plex-trakt-scrobbler',
+      'mediaserver_url'), l_id=l_id, plex_token=config.get('plex-trakt-scrobbler','plex_token'))
+    logger.info('Fetching library metadata from {url}'.format(url=url))
+
+    # fail if request is greater than 2 seconds.
+    try:
+        metadata = urllib2.urlopen(url, timeout=2)
+    except urllib2.URLError, e:
+        logger.error('urllib2 error reading from {url} \'{error}\''.format(url=url,
+                      error=e))
+        return False
+    except socket.timeout, e:
+        logger.error('Timeout reading from {url} \'{error}\''.format(url=url, error=e))
+        return False
+
+    tree = ET.fromstring(metadata.read())
+    video = tree.find('Video')
+
+    if video is None:
+        logger.info('Ignoring played item library-id={l_id}, could not determine video library information.'.
+                format(l_id=l_id))
+        return False
+
+    if video.get('type') != 'episode':
+        logger.info('Ignoring played item library-id={l_id}, because it is not an episode.'.
+                format(l_id=l_id))
+        return False
+
+    # matching from the guid field, which should provide the agent TVDB result
+    episode = video.get('guid')
+    show_name = video.get('grandparentTitle')
+
+    regex = re.compile('com.plexapp.agents.thetvdb://([0-9]+)/([0-9]+)/([0-9]+)\?.*')
+    m = regex.match(episode)
+
+    if not m:
+        return False
+
+    return {
+        'show_id': m.group(1),
+        'show_name': show_name,
+        'season_number': m.group(2),
+        'episode_number': m.group(3)
+    }
 
 
 def monitor_log(config):
