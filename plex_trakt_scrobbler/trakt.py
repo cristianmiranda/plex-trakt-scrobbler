@@ -1,3 +1,4 @@
+import socket
 import urllib2
 import urllib
 import urlparse
@@ -12,7 +13,7 @@ import os
 import json
 
 
-class Trak(object):
+class Trakt(object):
 
     CLIENT_ID = 'aa9cd9a641758c5c20f2076e657a199925a6d2409dcddd0c8737b0dc1e90b6b0'
     CLIENT_SECRET = 'c6a1b1d563a521b4b126efd8847cd18d2a5533a702997f6401dd6e8f48c83faa'
@@ -31,8 +32,7 @@ class Trak(object):
             sessfp.close()
         return session
 
-
-    def _do_tvst_post(self, url, data):
+    def _do_trakt_post(self, url, data):
 
         f = urllib2.Request(url)
         f.add_header('User-Agent', self.USER_AGENT)
@@ -44,6 +44,7 @@ class Trak(object):
                 url=url, error=e))
             raise
 
+
     def _get_auth_infos(self):
         args = {
             'client_id': self.CLIENT_ID
@@ -53,9 +54,10 @@ class Trak(object):
                                   'api-v2launch.trakt.tv',
                                   '/oauth/device/code', '', '', ''))
 
-        res = self._do_tvst_post(url, urllib.urlencode(args))
+        res = self._do_trakt_post(url, urllib.urlencode(args))
 
         return res
+
 
     def _get_access_token(self, code):
         args = {
@@ -66,35 +68,10 @@ class Trak(object):
         url = urlparse.urlunparse(('https',
                                   'api-v2launch.trakt.tv',
                                   '/oauth/device/token', '', '', ''))
-        res = self._do_tvst_post(url, urllib.urlencode(args))
+        res = self._do_trakt_post(url, urllib.urlencode(args))
 
         return res
 
-    def scrobble(self, show_id, season_number, number, played):
-
-        session = self.get_session()
-        self.logger.info(u'submitting {show_id} - S{season_number}E{number} to tvshowtime.com.'.format(
-                show_id=show_id, season_number=season_number.zfill(2), number=number.zfill(2)))
-
-        args = {
-            'access_token': session,
-            'show_id': show_id,
-            'season_number': season_number.zfill(2),
-            'number': number.zfill(2)
-        }
-
-        action_type = '/v1/checkin'
-        if not played:
-            action_type = '/v1/checkout'
-
-        url = urlparse.urlunparse(('https','api.tvshowtime.com', action_type, '', '', ''))
-
-        try:
-            res = self._do_tvst_post(url, urllib.urlencode(args))
-        except:
-            return False
-
-        return True
 
     def trakt_auth(self):
 
@@ -115,7 +92,7 @@ class Trak(object):
             self.logger.error('Unable to send authorization request {error}'.format(error=e))
             return False
 
-        if access_token_infos['result'] != 'OK':
+        if not access_token_infos['refresh_token']:
             print access_token_infos['message']
             return
 
@@ -126,3 +103,55 @@ class Trak(object):
         fp.write(token)
         fp.close()
         self.logger.info('Trak TV authorization successful.')
+
+
+    def _do_trakt_auth_post(self, url, data):
+        
+        try:
+            session = self.get_session()
+
+            headers = {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + session,
+              'trakt-api-version': '2',
+              'trakt-api-key': self.CLIENT_ID
+            }
+
+            # timeout in seconds
+            timeout = 5
+            socket.setdefaulttimeout(timeout)
+
+            request = urllib2.Request(url, data, headers)
+            response = urllib2.urlopen(request).read()
+            
+            self.logger.info('Response: {0}'.format(response))
+            return response
+        except urllib2.HTTPError as e:
+            self.logger.error('Unable to submit post data {url} - {error}'.format(url=url, error=e.reason))
+            raise        
+
+
+    def scrobble_show(self, show_name, season_number, episode_number, progress, scrobble_type):
+
+        self.logger.info('Scrobbling ({scrobble_type}) {show_name} - S{season_number}E{episode_number} - {progress} to trak.tv.'
+            .format(show_name=show_name, scrobble_type=scrobble_type, season_number=season_number.zfill(2), episode_number=episode_number.zfill(2), progress=progress))
+
+        data = {}
+        data['show'] = {}
+        data['show']['title'] = show_name
+        data['episode'] = {}
+        data['episode']['season'] = int(season_number)
+        data['episode']['number'] = int(episode_number)
+        data['progress'] = int(progress)
+        data['app_version'] = '1.0'
+        data['app_date'] = '2014-09-22'
+        json_data = json.dumps(data)
+
+        url = urlparse.urlunparse(('https','api-v2launch.trakt.tv', '/scrobble/' + scrobble_type, '', '', ''))
+
+        try:
+            res = self._do_trakt_auth_post(url, json_data)
+        except:
+            return False
+
+        return True

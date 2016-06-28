@@ -8,7 +8,7 @@ import threading
 import ConfigParser
 from optparse import OptionParser
 
-from plex_trakt_scrobbler.trakt import Trak
+from plex_trakt_scrobbler.trakt import Trakt
 from plex_trakt_scrobbler.plex_monitor import monitor_log
 from plex_trakt_scrobbler.pre_check import PLSSanity
 
@@ -94,8 +94,8 @@ if __name__ == '__main__':
     if (not os.path.exists(config.get('plex-trakt-scrobbler','session')) or
       options.authenticate):
         logger.info('Prompting to authenticate to Trak TV.')
-        trak = Trak(config)
-        trak.trakt_auth()
+        trakt = Trakt(config)
+        trakt.trakt_auth()
         print 'Please relaunch plex-trakt-scrobbler service.'
         logger.warn('Exiting application.')
         sys.exit(0)
