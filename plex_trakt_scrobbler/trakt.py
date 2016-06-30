@@ -24,6 +24,10 @@ class Trakt(object):
         self.logger = logging.getLogger(__name__)
         self.cfg = cfg
 
+    '''
+        Common API methods
+    '''    
+
     def get_session(self):
 
         if os.path.exists(self.cfg.get('plex-trakt-scrobbler', 'session')):
@@ -128,7 +132,39 @@ class Trakt(object):
             return response
         except urllib2.HTTPError as e:
             self.logger.error('Unable to submit post data {url} - {error}'.format(url=url, error=e.reason))
-            raise        
+            raise
+
+
+    def _do_trakt_auth_get(self, url):
+        
+        return self._do_trakt_auth_post(url, None)
+
+    '''
+        Trakt TV API methods
+    '''
+
+    def get_media(self, media_id, source):
+
+        self.logger.info('Getting Media information with {source} id: {media_id} from trak.tv.'
+            .format(source=source, media_id=media_id))
+
+        url = urlparse.urlunparse(('https','api-v2launch.trakt.tv', '/search', '', '', ''))
+        url += '?id_type={source}&id={media_id}'.format(source=source, media_id=media_id)
+
+        try:
+            return self._do_trakt_auth_get(url)
+        except:
+            return None
+
+
+    def get_movie(self, imdb_id):
+
+        return self.get_media(imdb_id, 'imdb')
+
+
+    def get_show(self, tvdb_id):
+
+        return self.get_media(tvdb_id, 'tvdb')
 
 
     def scrobble_show(self, show_name, season_number, episode_number, progress, scrobble_type):
