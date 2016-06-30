@@ -16,7 +16,6 @@ def platform_log_directory():
     ''' Retrieves the default platform specific default log location.
         This is called if the user does not specify a log location in
         the configuration file.
-        github issue https://github.com/jesseward/plex-tvst-scrobbler/issues/5
     '''
 
     LOG_DEFAULTS = {
@@ -24,7 +23,7 @@ def platform_log_directory():
         'Linux': '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log',
         'Windows': os.path.join(os.environ.get('LOCALAPPDATA', 'c:'), 'Plex Media Server/Logs/Plex Media Server.log'),
         'FreeBSD': '/usr/local/plexdata/Plex Media Server/Logs/Plex Media Server.log',
-        }
+    }
 
     return LOG_DEFAULTS[platform.system()]
 
