@@ -1,16 +1,10 @@
-import socket
-import urllib2
-import urllib
-import urlparse
-import xml.etree.ElementTree
-import re
-from htmlentitydefs import name2codepoint
-import hashlib
-import sys
-import logging
-import time
-import os
 import json
+import logging
+import os
+import socket
+import urllib
+import urllib2
+import urlparse
 
 
 class Trakt(object):
@@ -186,7 +180,7 @@ class Trakt(object):
         url = urlparse.urlunparse(('https','api-v2launch.trakt.tv', '/scrobble/' + scrobble_type, '', '', ''))
 
         try:
-            res = self._do_trakt_auth_post(url, json_data)
+            self._do_trakt_auth_post(url, json_data)
         except:
             return False
 

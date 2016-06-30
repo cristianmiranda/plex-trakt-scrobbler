@@ -1,16 +1,8 @@
+import logging
+import re
 import socket
 import urllib2
-import urllib
-import urlparse
 import xml.etree.ElementTree as ET
-import re
-from htmlentitydefs import name2codepoint
-import hashlib
-import sys
-import logging
-import time
-import os
-import json
 
 '''
     This is a helper class to provide assistance with all Plex API calls
