@@ -2,7 +2,7 @@ import os
 from distutils.core import setup
 
 NAME = 'plex-trakt-scrobbler'
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 
 setup(
     name = 'plex_trakt_scrobbler',
