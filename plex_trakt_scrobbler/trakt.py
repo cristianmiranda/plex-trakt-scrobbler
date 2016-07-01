@@ -185,3 +185,27 @@ class Trakt(object):
             return False
 
         return True
+
+
+    def scrobble_movie(self, imdb_id, progress, scrobble_type):
+
+        self.logger.info('Scrobbling ({scrobble_type}) {imdb_id} - {progress} to trak.tv.'
+            .format(imdb_id=imdb_id, scrobble_type=scrobble_type, progress=progress))
+
+        data = {}
+        data['movie'] = {}
+        data['movie']['ids'] = {}
+        data['movie']['ids']['imdb'] = imdb_id
+        data['progress'] = int(progress)
+        data['app_version'] = '1.0'
+        data['app_date'] = '2014-09-22'
+        json_data = json.dumps(data)
+
+        url = urlparse.urlunparse(('https','api-v2launch.trakt.tv', '/scrobble/' + scrobble_type, '', '', ''))
+
+        try:
+            self._do_trakt_auth_post(url, json_data)
+        except:
+            return False
+
+        return True
