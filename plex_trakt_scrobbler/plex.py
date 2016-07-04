@@ -46,12 +46,13 @@ class Plex(object):
         else:
             for video in videos:
                 user = video.find('User')
+                m_id = video.get('key')
+                
                 if user.get('id') != user_id:
                     self.logger.info('Ignoring played item library-id={m_id}, because it is from another user.'
                         .format(m_id=m_id))
                     continue
 
-                m_id = video.get('key')
                 if '/library/metadata/' + l_id != m_id:
                     self.logger.info('Ignoring played item library-id={m_id}, because it is not the wanted item.'
                         .format(m_id=m_id))
