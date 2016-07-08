@@ -3,8 +3,8 @@ import os
 import re
 import time
 
-from plex import Plex
-from trakt import Trakt
+from helper.plex import Plex
+from helper.trakt import Trakt
 
 # Processed TV Show
 
@@ -27,10 +27,11 @@ progress = 0
 
 USER_ID = '1'
 
-
 '''
     Keeps an eye on Plex Media Server log
 '''
+
+
 def monitor_log(config):
     logger = logging.getLogger(__name__)
     st_mtime = False
@@ -84,8 +85,9 @@ def monitor_log(config):
         
     @return Nothing 
 '''
-def parse_line(config, log_line):
 
+
+def parse_line(config, log_line):
     SCROBBLE_REGEX = [
         re.compile('.*Updated play state for /library/metadata/([0-9]+).*'),
     ]
@@ -118,8 +120,9 @@ def parse_line(config, log_line):
         
     @return Nothing 
 '''
-def scrobble(config, item):
 
+
+def scrobble(config, item):
     plex = Plex(config)
     media = plex.get_media_metadata_from_library(item)
     if 'show_id' in media:
@@ -135,8 +138,9 @@ def scrobble(config, item):
         
     @return Nothing 
 '''
-def scrobble_show(config, item):
 
+
+def scrobble_show(config, item):
     global show_id
     global show_name
     global season_number
@@ -161,7 +165,7 @@ def scrobble_show(config, item):
         scrobbling = metadata['srobbling']
 
     if show_id:
-        episode_label = "{0} S{1}E{2} - ({3}) - Progress: {4} - Duration: {5}"\
+        episode_label = "{0} S{1}E{2} - ({3}) - Progress: {4} - Duration: {5}" \
             .format(show_name, season_number, episode_number, scrobbling, progress, duration)
 
         logger.info("Scrobble - {0}".format(episode_label))
@@ -184,8 +188,9 @@ def scrobble_show(config, item):
         
     @return Nothing 
 '''
-def scrobble_movie(config, item):
 
+
+def scrobble_movie(config, item):
     global imdb_id
     global movie_name
     global duration
@@ -206,7 +211,7 @@ def scrobble_movie(config, item):
         scrobbling = metadata['srobbling']
 
     if imdb_id:
-        movie_label = "{0} - ({1}) - Progress: {2} - Duration: {3}"\
+        movie_label = "{0} - ({1}) - Progress: {2} - Duration: {3}" \
             .format(movie_name, scrobbling, progress, duration)
 
         logger.info("Scrobble - {0}".format(movie_label))
@@ -227,8 +232,9 @@ def scrobble_movie(config, item):
 
     @return Nothing
 '''
+
+
 def mark_as_watched(config, media_id, user_id):
-    
     if user_id == USER_ID:
         plex = Plex(config)
         media = plex.get_media_metadata_from_library(media_id)
@@ -245,6 +251,8 @@ def mark_as_watched(config, media_id, user_id):
 
     @return Nothing
 '''
+
+
 def mark_show_as_watched(config, media_id, user_id):
     logger = logging.getLogger(__name__)
 
@@ -253,7 +261,7 @@ def mark_show_as_watched(config, media_id, user_id):
         metadata = plex.get_media_metadata_from_library(media_id)
         if not metadata: return
 
-        episode_label = "{0} S{1}E{2}"\
+        episode_label = "{0} S{1}E{2}" \
             .format(metadata['show_name'], metadata['season_number'], metadata['episode_number'])
         logger.info("Mark as watched - {0}".format(episode_label))
 
@@ -268,6 +276,8 @@ def mark_show_as_watched(config, media_id, user_id):
 
     @return Nothing
 '''
+
+
 def mark_movie_as_watched(config, media_id, user_id):
     logger = logging.getLogger(__name__)
 
