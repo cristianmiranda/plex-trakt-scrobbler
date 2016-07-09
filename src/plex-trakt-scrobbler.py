@@ -53,7 +53,8 @@ if __name__ == '__main__':
                  help='Run a pre-check to ensure a correctly configured system.')
     p.add_option('-a', '--authenticate', action='store_true', dest='authenticate', default=False,
                  help='Generate a new TVShow Time session key.')
-    p.set_defaults(config_file=os.path.expanduser('~/.config/plex-trakt-scrobbler/plex_trakt_scrobbler.conf'))
+    #p.set_defaults(config_file=os.path.expanduser('~/.config/plex-trakt-scrobbler/plex_trakt_scrobbler.conf'))
+    p.set_defaults(config_file=os.path.expanduser('conf/plex_trakt_scrobbler.conf'))
 
     (options, args) = p.parse_args()
 
