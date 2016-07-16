@@ -66,10 +66,10 @@ if __name__ == '__main__':
     # apply defaults to *required* configuration values.
     config = ConfigParser.ConfigParser(defaults={
         'config file location': options.config_file,
-        'session': os.path.expanduser('~/.config/plex-trakt-scrobbler/session_key'),
+        'session': os.path.expanduser('/home/pi/plex_trakt_scrobbler_session_key'),
         'mediaserver_url': 'http://localhost:32400',
         'mediaserver_log_location': platform_log_directory(),
-        'log_file': '/tmp/plex_trakt_scrobbler.log'
+        'log_file': '/home/pi/plex_trakt_scrobbler.log'
     })
     config.read(options.config_file)
 
