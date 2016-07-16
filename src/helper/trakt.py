@@ -90,10 +90,16 @@ class Trakt(object):
             return
 
         token = access_token_infos['access_token']
+        refresh_token = access_token_infos['refresh_token']
 
         fp = open(self.cfg.get('plex-trakt-scrobbler', 'session'), 'w')
         fp.write(token)
         fp.close()
+
+        fp = open(self.cfg.get('plex-trakt-scrobbler', 'session') + '_refresh', 'w')
+        fp.write(refresh_token)
+        fp.close()
+
         self.logger.info('Trak TV authorization successful.')
 
     def _do_trakt_auth_post(self, url, data):
