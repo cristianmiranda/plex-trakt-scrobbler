@@ -49,6 +49,7 @@ class Plex(object):
         else:
             for video in videos:
                 user = video.find('User')
+                media = video.find('Media')
                 m_id = video.get('key')
 
                 if user.get('id') != user_id:
@@ -67,7 +68,7 @@ class Plex(object):
                                      .format(m_id=m_id))
                     return None
 
-                transcode = video.find('Part')
+                transcode = media.find('Part')
                 if transcode is None:
                     self.logger.info(
                         'Ignoring played item library-id={m_id}, could not determine transcoding information.'
