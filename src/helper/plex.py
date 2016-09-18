@@ -67,7 +67,7 @@ class Plex(object):
                                      .format(m_id=m_id))
                     return None
 
-                transcode = video.find('TranscodeSession')
+                transcode = video.find('Part')
                 if transcode is None:
                     self.logger.info(
                         'Ignoring played item library-id={m_id}, could not determine transcoding information.'
