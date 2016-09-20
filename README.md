@@ -1,3 +1,5 @@
+![logo](http://i.imgur.com/l2hcxJY.png)
+
 Plex Trakt TV Scrobbler
 =====================
 
